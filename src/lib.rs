@@ -1,5 +1,5 @@
-//! # Pass 
-//! `pass` contains primitives for exporting pass <https://passwordstore.org>
+//! # Pass
+//! `pass` contains primitives for decoding pass <https://passwordstore.org>
 //! entries into structured data.
 //!
 //! `pass` password entries utilize an informal schema. By convention, many
@@ -68,15 +68,17 @@ impl Entry {
     ///
     /// # Example:
     /// This is handy for piping the return from stdout.
-    /// ```
-    /// let name = "myEmail"
+    /// ```no_run
+    /// use std::process::{Command, Stdio};
+    ///
+    /// let name = "myEmail";
     /// let output = Command::new("pass")
     ///    .arg(&name)
     ///    .stdout(Stdio::piped())
     ///    .output()
     ///    .expect("command failed");
     ///
-    /// let entry = pass::Entry.from_utf8(&output.stdout).unwrap();
+    /// let entry = pass::Entry::from_utf8(name, &output.stdout).unwrap();
     /// ```
     pub fn from_utf8(entry: &str, data: &[u8]) -> Result<Entry, &'static str> {
         let input = std::str::from_utf8(data);
@@ -87,3 +89,48 @@ impl Entry {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::Entry;
+
+    const ENTRY: &str = "password123
+url: https://some.test.biz
+notes line 1
+login: user
+notes line 2
+notes line 3";
+
+    #[test]
+    fn from_utf8() {
+        let result = Entry::from_utf8("test", ENTRY.as_bytes());
+        match result {
+            Ok(ent) => {
+                assert!(ent.password == Some("password123".to_string()));
+                assert!(ent.login == Some("user".to_string()));
+                assert!(ent.url == Some("https://some.test.biz".to_string()));
+                assert!(
+                    ent.notes == Some("notes line 1\nnotes line 2\nnotes line 3\n".to_string())
+                );
+            }
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn bad_name() {
+        let result = Entry::from_utf8("", ENTRY.as_bytes());
+        match result {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn bad_data() {
+        let result = Entry::from_utf8("", b"");
+        match result {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+}
