@@ -2,8 +2,9 @@
 name = "pass"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = [ "Mark Wilkerson <cargo@markhuge.com>" ]
+description = "parse password-store entries"
+license = "LGPL-2.1"
 
 [dependencies]
 serde = {version = "1.0.138", features = ["derive"]}
